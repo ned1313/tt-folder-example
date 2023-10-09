@@ -1,2 +1,2 @@
 environment = "prod"
-env_version     = "1.1"
+env_version     = "1.2"

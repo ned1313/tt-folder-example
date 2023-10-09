@@ -1,2 +1,2 @@
 environment = "staging"
-env_version     = "1.1"
+env_version     = "1.2"
