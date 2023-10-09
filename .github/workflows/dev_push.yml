@@ -7,10 +7,13 @@ on:
     paths:
       - 'dev/**'
 
-
 env:
   TF_LOG: INFO
   TF_INPUT: false
+
+permissions:
+    id-token: write
+    contents: read
 
 jobs:
   terraform:
