@@ -20,7 +20,7 @@ variable "environment" {
   description = "(Required) The environment in which all resources in this example should be created."
 }
 
-variable "version" {
+variable "env_version" {
   type        = string
   description = "(Required) Update to force a change."
 }
@@ -31,6 +31,6 @@ resource "azurerm_resource_group" "main" {
 
   tags = {
     environment = var.environment
-    version     = var.version
+    version     = var.env_version
   }
 }
