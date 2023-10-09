@@ -10,6 +10,6 @@ terraform {
     # Details configured by GitHub Actions
     use_azuread_auth = true
     use_oidc         = true
-    key = "prod.tfstate"
+    key              = "prod.tfstate"
   }
 }
