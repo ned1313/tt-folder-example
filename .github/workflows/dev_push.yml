@@ -2,8 +2,6 @@ name: 'Push on Dev environment'
 
 on:
   push:
-    branches:
-      - main
     paths:
       - 'dev/**'
 
@@ -55,11 +53,29 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME"
 
-    # Run Terraform apply
+    # Run Terraform apply if branch is main
     - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
       id: apply
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: terraform apply -auto-approve
+
+    # Run formatting and validate if the branch is not main
+    # Run a Terraform fmt
+    - name: Terraform format
+      if: github.ref != 'refs/heads/main'
+      id: fmt
+      run: terraform fmt -check
+
+    # Run a Terraform validate
+    - name: Terraform validate
+      id: validate
+      if: (success() || failure()) && github.ref != 'refs/heads/main'
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: terraform validate -no-color
