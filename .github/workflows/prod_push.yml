@@ -1,9 +1,7 @@
-name: 'Push on prod environment'
+name: 'Push on Prod environment'
 
 on:
   push:
-    branches:
-      - main
     paths:
       - 'prod/**'
 
@@ -17,7 +15,7 @@ permissions:
 
 jobs:
   terraform:
-    name: 'Terraform Apply on Push'
+    name: 'Terraform Push'
     runs-on: ubuntu-latest
 
     # Use the Bash shell
@@ -35,17 +33,19 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
 
-    # Log into Azure with OIDC integration
-    - name: 'Az CLI login'
+    # Log into Azure with OIDC integration if branch is main
+    - name: 'Az CLI login for Main branch' 
+      if: github.ref == 'refs/heads/main'
       uses: azure/login@v1
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    # Run Terraform init
-    - name: Terraform Init
-      id: init
+    # Run Terraform init for Main branch
+    - name: Terraform Init for Main branch
+      id: init-main
+      if: github.ref == 'refs/heads/main'
       env:
         STORAGE_ACCOUNT: ${{ secrets.STORAGE_ACCOUNT }}
         CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
@@ -55,11 +55,34 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: terraform init -backend-config="storage_account_name=$STORAGE_ACCOUNT" -backend-config="container_name=$CONTAINER_NAME" -backend-config="resource_group_name=$RESOURCE_GROUP_NAME"
 
-    # Run Terraform apply
-    - name: Terraform Apply
+    # Run Terraform apply if branch is main
+    - name: Terraform Apply for Main branch
+      if: github.ref == 'refs/heads/main'
       id: apply
       env:
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       run: terraform apply -auto-approve
+
+    # Run formatting and validate if the branch is not main
+    - name: Terraform Init for other branches
+      id: init
+      if: github.ref != 'refs/heads/main'
+      run: terraform init -backend=false
+
+    # Run a Terraform format
+    - name: Terraform format for other branches
+      if: github.ref != 'refs/heads/main'
+      id: fmt
+      run: terraform fmt -check
+
+    # Run a Terraform validate
+    - name: Terraform validate for other branches
+      id: validate
+      if: (success() || failure()) && github.ref != 'refs/heads/main'
+      env:
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      run: terraform validate -no-color
