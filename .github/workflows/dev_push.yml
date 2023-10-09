@@ -1,4 +1,4 @@
-name: 'Pull Request on Dev environment'
+name: 'Push on Dev environment'
 
 on:
   push:

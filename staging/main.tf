@@ -20,11 +20,17 @@ variable "environment" {
   description = "(Required) The environment in which all resources in this example should be created."
 }
 
+variable "env_version" {
+  type        = string
+  description = "(Required) Update to force a change."
+}
+
 resource "azurerm_resource_group" "main" {
   location = var.location
   name     = "${var.prefix}-${var.environment}-folder"
 
   tags = {
     environment = var.environment
+    version     = var.env_version
   }
 }
